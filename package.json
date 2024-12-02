@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "axios": "^1.7.8",
+    "express": "^4.21.1",
+    "serverless-http": "^3.2.0"
+  },
+  "name": "sse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  ,
+    "build": "cp index.html public/ && cp app.js public/"
+  }
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
