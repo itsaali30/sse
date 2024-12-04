@@ -1,0 +1,2 @@
+ngrok config add-authtoken 2kku5nLgkIYAy7OswuJy0BQx6R2_3mp48C8N3n5JBkVu4dn57
+ngrok tcp 9092
