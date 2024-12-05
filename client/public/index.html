@@ -3,96 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kafka Producer & Consumer</title>
+  <title>Chat App</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .messages {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background: #f9f9f9;
-      height: 200px;
-      overflow-y: auto;
-    }
-    .input-group {
-      margin-bottom: 10px;
-    }
-    .input-group input {
-      width: calc(100% - 100px);
-      padding: 10px;
-    }
-    .input-group button {
-      padding: 10px;
-    }
-  </style>
 </head>
 <body>
-  <div id="app" class="container">
-    <h1>Kafka Producer & Consumer</h1>
-
-    <!-- Produce Messages -->
-    <div class="input-group">
-      <input v-model="message" placeholder="Enter a message" />
-      <button @click="produceMessage">Send</button>
+  <div id="app">
+    <h1>Chat Application</h1>
+    <div class="chat-window">
+      <div v-for="msg in messages" class="message">{{ msg }}</div>
     </div>
-
-    <!-- Consume Messages -->
-    <div class="messages">
-      <h3>Received Messages:</h3>
-      <div v-for="msg in messages" :key="msg" class="message">
-        {{ msg }}
-      </div>
-    </div>
+    <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..." />
+    <button @click="sendMessage">Send</button>
   </div>
 
-  <script>
-    const app = new Vue({
-      el: '#app',
-      data: {
-        message: '',
-        messages: []
-      },
-      methods: {
-        async produceMessage() {
-          if (!this.message) {
-            alert('Please enter a message.');
-            return;
-          }
-          try {
-            // Replace with your API endpoint to produce a message
-            await axios.post('/produce', { message: this.message });
-            alert('Message sent!');
-            this.message = '';
-          } catch (error) {
-            console.error('Error sending message:', error);
-            alert('Failed to send message.');
-          }
-        },
-        async fetchMessages() {
-          try {
-            // Replace with your API endpoint to consume messages
-            const response = await axios.get('/consume');
-            this.messages = response.data.messages || [];
-          } catch (error) {
-            console.error('Error fetching messages:', error);
-          }
-        }
-      },
-      mounted() {
-        // Poll the consume endpoint every 5 seconds
-        setInterval(this.fetchMessages, 50);
-      }
-    });
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

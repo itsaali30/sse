@@ -13,15 +13,40 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Kafka configuration
-const kafkaHost = 'localhost:9092'; // Adjust this based on your Kafka setup
+const kafkaHost = 'localhost:9092'; // Adjust based on your Kafka setup
 const client = new KafkaClient({ kafkaHost });
 const producer = new Producer(client);
 const consumer = new Consumer(client, [{ topic: 'test-topic', partition: 0 }], { autoCommit: true });
 
-// Message storage
-const messages = [];
+// SSE Clients Storage
+const sseClients = [];
 
-// Route to produce messages
+// SSE Route for Real-Time Communication
+app.get('/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Push client response to sseClients array
+  sseClients.push(res);
+
+  // Remove client when the connection is closed
+  req.on('close', () => {
+    const index = sseClients.indexOf(res);
+    if (index !== -1) {
+      sseClients.splice(index, 1);
+    }
+  });
+});
+
+// Function to Broadcast Messages to All Connected SSE Clients
+const broadcastMessage = (message) => {
+  sseClients.forEach((client) => {
+    client.write(`data: ${JSON.stringify(message)}\n\n`);
+  });
+};
+
+// Kafka Producer: Send Messages to Topic
 app.post('/produce', (req, res) => {
   const { message } = req.body;
 
@@ -39,36 +64,33 @@ app.post('/produce', (req, res) => {
   });
 });
 
-// Route to consume messages
-app.get('/consume', (req, res) => {
-  res.json({ messages });
-});
-
-// Kafka consumer: listen for messages
+// Kafka Consumer: Receive Messages from Topic
 consumer.on('message', (message) => {
   console.log('Received message:', message.value);
-  messages.push(message.value); // Store received messages
+  broadcastMessage({ value: message.value }); // Broadcast to SSE clients
 });
 
-// Handle Kafka errors
+// Handle Kafka Consumer Errors
 consumer.on('error', (err) => {
   console.error('Kafka Consumer Error:', err);
 });
 
+// Handle Kafka Producer Readiness
 producer.on('ready', () => {
   console.log('Kafka Producer is ready');
 });
 
+// Handle Kafka Producer Errors
 producer.on('error', (err) => {
   console.error('Kafka Producer Error:', err);
 });
 
-// Fallback route for SPA (serves index.html for any unmatched routes)
+// Fallback Route for SPA (Serves index.html)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start the server
+// Start the Server
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 });
