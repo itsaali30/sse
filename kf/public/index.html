@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kafka Producer/Consumer</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>Kafka Producer/Consumer</h1>
+        <div>
+            <input type="text" v-model="message" placeholder="Enter a message">
+            <button @click="sendMessage">Produce</button>
+        </div>
+        <div>
+            <button @click="fetchConsumer1Messages">Fetch All Consumer 1 Messages</button>
+            <h3>Consumer 1 Messages:</h3>
+            <ul>
+                <li v-for="msg in consumer1Messages" :key="msg">{{ msg }}</li>
+            </ul>
+        </div>
+        <div>
+            <button @click="fetchConsumer2Messages">Fetch All Consumer 2 Messages</button>
+            <h3>Consumer 2 Messages:</h3>
+            <ul>
+                <li v-for="msg in consumer2Messages" :key="msg">{{ msg }}</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                message: '',
+                consumer1Messages: [],
+                consumer2Messages: [],
+            },
+            methods: {
+                sendMessage() {
+                    axios.post('/produce', { message: this.message })
+                        .then(() => {
+                            alert('Message sent successfully!');
+                            this.message = '';
+                        })
+                        .catch(err => console.error(err));
+                },
+                fetchConsumer1Messages() {
+                    axios.get('/consume1')
+                        .then(res => this.consumer1Messages = res.data.messages || [])
+                        .catch(err => console.error(err));
+                },
+                fetchConsumer2Messages() {
+                    axios.get('/consume2')
+                        .then(res => this.consumer2Messages = res.data.messages || [])
+                        .catch(err => console.error(err));
+                },
+            },
+        });
+    </script>
+</body>
+</html>
