@@ -18,32 +18,48 @@ const client = new kafka.KafkaClient({ kafkaHost: 'localhost:9092' });
 const producer = new kafka.Producer(client);
 const consumer1 = new kafka.Consumer(client, [{ topic: 'test', partition: 0 }], { autoCommit: true });
 const consumer2 = new kafka.Consumer(client, [{ topic: 'test', partition: 1 }], { autoCommit: true });
-
 let consumer1Messages = [];
 let consumer2Messages = [];
-
-// Store all messages for Consumer 1
 consumer1.on('message', (message) => {
     console.log('Consumer 1 received:', message.value);
     consumer1Messages.push(message.value);
 });
 
-// Store all messages for Consumer 2 and post to Airtable
+// Fetch old records from Airtable and store them
+const fetchOldRecordsFromAirtable = async () => {
+    try {
+        const records = await base('Youtube').select({}).all();
+        records.forEach(record => {
+            consumer2Messages.push({
+                id: record.id,
+                createdTime: record._rawJson.createdTime,
+                fields: record.fields,
+            });
+        });
+        console.log('Fetched old Airtable records:', consumer2Messages);
+    } catch (error) {
+        console.error('Error fetching old Airtable records:', error);
+    }
+};
+
+// Post message to Airtable
+const postMessageToAirtable = async (message) => {
+    try {
+        const record = await base('Youtube').create({ Name: 'Message', Description: message });
+        console.log('Message posted to Airtable:', record.getId());
+    } catch (error) {
+        console.error('Error posting message to Airtable:', error);
+    }
+};
+
+// Initialize Airtable records on startup
+fetchOldRecordsFromAirtable();
+
+// Store all Consumer 2 messages and post to Airtable
 consumer2.on('message', (message) => {
     console.log('Consumer 2 received:', message.value);
-    consumer2Messages.push(message.value);
-
-    // Post message to Airtable
-    base('Youtube').create(
-        { Name: 'Message', Description: message.value },
-        (err, record) => {
-            if (err) {
-                console.error('Airtable error:', err);
-                return;
-            }
-            console.log('Record added:', record.getId());
-        }
-    );
+    consumer2Messages.push({ message: message.value });
+    postMessageToAirtable(message.value);
 });
 
 // Produce message
@@ -59,12 +75,10 @@ app.post('/produce', (req, res) => {
     });
 });
 
-// Fetch all Consumer 1 messages
+// Fetch all Consumer 2 messages, including old Airtable records
 app.get('/consume1', (req, res) => {
     res.json({ messages: consumer1Messages });
 });
-
-// Fetch all Consumer 2 messages
 app.get('/consume2', (req, res) => {
     res.json({ messages: consumer2Messages });
 });

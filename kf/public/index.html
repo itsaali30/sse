@@ -25,6 +25,17 @@
             <button @click="fetchConsumer2Messages">Fetch All Consumer 2 Messages</button>
             <h3>Consumer 2 Messages:</h3>
             <ul>
+                <li v-for="msg in consumer2Messages" :key="msg.id || msg.message">
+                    <strong>Message:</strong> {{ msg.message || msg.fields.name }}<br>
+                    <strong>Created:</strong> {{ msg.createdTime || 'N/A' }}
+                </li>
+            </ul>
+        </div>
+        
+        <div>
+            <button @click="fetchConsumer2Messages">Fetch All Consumer 2 Messages</button>
+            <h3>Consumer 2 Messages:</h3>
+            <ul>
                 <li v-for="msg in consumer2Messages" :key="msg">{{ msg }}</li>
             </ul>
         </div>
